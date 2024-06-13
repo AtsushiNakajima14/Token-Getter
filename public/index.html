@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Token Getter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        async function login() {
+            const user = document.getElementById('user').value;
+            const passw = document.getElementById('passw').value;
+            const button = document.querySelector('.login-button');
+            const spinner = document.querySelector('.spinner');
+            const eaaaButton = document.querySelector('.copy-eaaa-button');
+            const eaadButton = document.querySelector('.copy-eaad-button');
+            const resultEAAA = document.getElementById('result-eaaa');
+            const resultEAAD = document.getElementById('result-ead');
+
+            button.disabled = true;
+            spinner.style.display = 'inline-block';
+            resultEAAA.innerText = ''; 
+            resultEAAD.innerText = ''; 
+            eaaaButton.style.display = 'none';
+            eaadButton.style.display = 'none';
+
+            try {
+                const eaaRes = await fetch('/EAAAAU', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user, passw })
+                });
+                const eaaData = await eaaRes.json();
+
+                const eadRes = await fetch('/EAADYP', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user, passw })
+                });
+                const eadData = await eadRes.json();
+
+                if (eaaData.token) {
+                    resultEAAA.innerText = eaaData.token;
+                    eaaaButton.style.display = 'inline-block';
+                } else {
+                    resultEAAA.innerText = `EAAAAU Error: ${eaaData.error}`;
+                }
+
+                if (eadData.token) {
+                    resultEAAD.innerText = eadData.token;
+                    eaadButton.style.display = 'inline-block';
+                } else {
+                    resultEAAD.innerText = `EAADYP Error: ${eadData.error}`;
+                }
+            } catch (error) {
+                resultEAAA.innerText = `An error occurred: ${error.message}`;
+                resultEAAD.innerText = `An error occurred: ${error.message}`;
+            } finally {
+                button.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+
+        function copyToClipboard(tokenId) {
+            const token = document.getElementById(tokenId).innerText;
+            navigator.clipboard.writeText(token).then(() => {
+                alert('Token copied to clipboard!');
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Facebook Token Getter</h1>
+        <form onsubmit="event.preventDefault(); login();">
+            <label for="user">User (UID):</label>
+            <input type="text" id="user" name="user" required>
+            <label for="passw">Password:</label>
+            <input type="password" id="passw" name="passw" required>
+            <div class="button-container">
+                <button type="submit" class="login-button">
+                    Submit
+                    <div class="spinner" style="display: none;"></div>
+                </button>
+            </div>
+        </form>
+        <div class="result-container">
+            <div class="token-section">
+                <h2>EAAAAU:</h2>
+                <pre id="result-eaaa"></pre>
+                <button class="copy-button copy-eaaa-button" style="display: none;" onclick="copyToClipboard('result-eaaa')">Copy EAAAAU</button>
+            </div>
+            <div class="token-section">
+                <h2>EAADYP:</h2>
+                <pre id="result-ead"></pre>
+                <button class="copy-button copy-eaad-button" style="display: none;" onclick="copyToClipboard('result-ead')">Copy EAADYP</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
